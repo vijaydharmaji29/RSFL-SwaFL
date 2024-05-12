@@ -1,3 +1,6 @@
 /global_models/*
 /local_models/*
 /local_models_unzipped/*
+/venv/
+aggregator_cpu_ram_stats.csv
+aggregator_round_stats.csv

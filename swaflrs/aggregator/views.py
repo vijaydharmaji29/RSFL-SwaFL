@@ -11,6 +11,8 @@ import zipfile
 import tensorflow as tf
 import numpy as np
 import pickle
+import csv
+import psutil
 
 
 
@@ -23,17 +25,48 @@ current_round_uploads = set()
 nodes_deregistered = 0
 node_non_participation = 0
 
+round_start_times = [time.time()]
+round_end_times = []
+first_model_times = []
+last_model_times = []
+
 def store_file(file, name):
     with open("local_models/" + name, "wb+") as dest:
         for chunk in file.chunks():
             dest.write(chunk)
 
+def write_stats():
+    global round_end_times, round_start_times, first_model_times, last_model_times, cpu_ram_usage
+    # Zip the lists together to iterate over them simultaneously
+    data = zip(round_start_times[:-1], round_end_times, first_model_times, last_model_times)
+
+    # Specify the file name
+    csv_file = "aggregator_round_stats.csv"
+
+    # Write data to CSV file
+    with open(csv_file, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        # Write the header
+        writer.writerow(['Round Start Times', 'Round End Times', 'First Model Times', 'Last Model Times'])
+        # Write the data
+        for row in data:
+            writer.writerow(row)
+    
+
+
 def start_new_round():
     global latest_local_models, round_number, current_round_uploads, node_non_participation
+    global round_end_times, round_start_times, first_model_times, last_model_times
     latest_local_models = [] 
     round_number += 1
     current_round_uploads = set()
     node_non_participation = 0
+    round_end_times.append(time.time())
+
+    #write aggregator stats
+    write_stats()
+
+    round_start_times.append(time.time())
 
 def unzip_file(zip_path, extract_to):
     """
@@ -77,7 +110,7 @@ def aggregate_local_models():
             pickle.dump(avg_weights, file)
 
         global_models.append(weights_saved_path)
-
+    print("Printing: ", round_start_times, round_end_times)
     start_new_round()
     print("Done aggregating")
 
@@ -119,6 +152,7 @@ class PollingView(View):
         return JsonResponse({"round": round_number}, safe=False)
     
 class UploadLocalModelView(View):
+    global round_end_times, round_start_times, first_model_times, last_model_times
     def post(self, request):
         global node_ids, global_models, local_models, latest_local_models, round_number, current_round_uploads, node_non_participation, nodes_deregistered
         
@@ -133,18 +167,25 @@ class UploadLocalModelView(View):
             local_models[node_id].append(file_name)
             latest_local_models.append(file_name)
             success = True    
+
+            if len(current_round_uploads) == 0:
+                first_model_times.append(time.time())
+            
             current_round_uploads.add(node_id)
+            
         else:
             success = False
 
         #make thread for aggregating latest local models
         if len(latest_local_models) == (len(node_ids) - nodes_deregistered - node_non_participation):
+            last_model_times.append(time.time())
             thread = threading.Thread(target=aggregate_local_models)
             thread.start()
 
         return JsonResponse({"success": success}, safe=False)
     
 class RetrieveLatestModelView(View):
+    global round_end_times, round_start_times, first_model_times, last_model_times
     def post(self, request):
         if round == 0:
             return JsonResponse({"success": False})
@@ -170,12 +211,14 @@ class DeregisterView(View):
         print("Node dergistered")
 
         if len(latest_local_models) == (len(node_ids) - nodes_deregistered - node_non_participation):
+            last_model_times.append(time.time())
             thread = threading.Thread(target=aggregate_local_models)
             thread.start()
 
         return JsonResponse({"success": True}, safe=False)
     
 class NonParticipationView(View):
+    global round_end_times, round_start_times, first_model_times, last_model_times
     def post(self, request):
         global node_non_participation
         node_non_participation += 1
@@ -184,6 +227,7 @@ class NonParticipationView(View):
         print((len(node_ids) - nodes_deregistered - node_non_participation))
 
         if len(latest_local_models) == (len(node_ids) - nodes_deregistered - node_non_participation):
+            last_model_times.append(time.time())
             thread = threading.Thread(target=aggregate_local_models)
             thread.start()
 
