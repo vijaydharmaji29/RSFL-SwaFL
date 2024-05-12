@@ -58,8 +58,13 @@ class TrainingManager:
             user_cluster = self.dataManager.user_clusters[int(user_id)]
 
             sqaured_sum_list[user_cluster] += (acc_difference*acc_difference)
-            
-        return sqaured_sum_list
+        
+        shuffled = self.ratings.shuffle(100_000, seed=42, reshuffle_each_iteration=False)
+        test = shuffled.skip(int(len(self.ratings)*0.8)).take(int(len(self.ratings)*0.2)).batch(1)
+
+        evaluation = self.model.evaluate(test, return_dict=True)
+
+        return sqaured_sum_list, evaluation
     
     def train(self, ratings):
         shuffled = ratings.shuffle(100_000, seed=42, reshuffle_each_iteration=False)
@@ -69,10 +74,10 @@ class TrainingManager:
         if self.model_weights != None:
             self.model.set_weights(self.model_weights)
 
-        self.model.fit(train, epochs=3)
+        self.model.fit(train, epochs=1)
         self.model_weights = self.model.get_weights()
 
         evaluation = self.model.evaluate(test, return_dict=True)
 
-        print(evaluation)
+        print("Local model evaluation:", evaluation)
 

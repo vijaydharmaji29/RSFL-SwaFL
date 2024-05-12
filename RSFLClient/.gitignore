@@ -3,3 +3,4 @@
 /saved_model/
 saved_model_*.zip
 global_weights.pkl
+/venv/

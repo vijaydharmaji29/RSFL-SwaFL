@@ -32,6 +32,7 @@ round_start_end_time = []
 round_participation = []
 scores = []
 running_flag = False
+global_model_rmse = []
 
 
 def measure_cpu_ram():
@@ -42,7 +43,7 @@ def measure_cpu_ram():
         cpu_usage = psutil.cpu_percent(interval=1)
         ram_usage = psutil.virtual_memory().percent
         cpu_ram_usage.append((time_now, cpu_usage, ram_usage))
-        time.sleep(0.5)
+        time.sleep(1)
 
 
 def zip_directory(folder_path, output_zip_path):
@@ -179,7 +180,14 @@ def run(_name, _numberOfRounds = 40, _threshold = 0):
                 global_weights_list = pickle.load(file)
 
             trainingManager.model.set_weights(global_weights_list)
-            accuracy_distribution = trainingManager.testAccuracy()
+            accuracy_distribution, evaluation = trainingManager.testAccuracy()
+
+            rms = evaluation['root_mean_squared_error']
+            loss = evaluation['loss']
+
+            global_model_rmse.append((rms, loss))
+
+            print("Evaluation:", evaluation)
             print("Accuracy Distribution:", accuracy_distribution)
         
         prev_round_end_time = time.time()
@@ -193,8 +201,6 @@ def run(_name, _numberOfRounds = 40, _threshold = 0):
     print("Execution Complete")
     deregister_url = base_url + "/aggregator/deregister_node/"
     response = requests.post(deregister_url)
-    print(response)
-    print(response)
     print("Deregistered node")
 
 def write_analysis():
@@ -219,6 +225,11 @@ def write_analysis():
         writer = csv.writer(file)
         # Write all rows at once
         writer.writerows(scores)
+
+    with open("./analysis/rmse.csv", 'w', newline='') as file:
+        writer = csv.writer(file)
+        # Write all rows at once
+        writer.writerows(global_model_rmse)
     
     return
 
