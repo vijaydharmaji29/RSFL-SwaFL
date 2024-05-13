@@ -67,6 +67,8 @@ def start_new_round():
     write_stats()
 
     round_start_times.append(time.time())
+    print("Number of Nodes:", len(node_ids))
+    print("Nodes:", node_ids)
 
 def unzip_file(zip_path, extract_to):
     """
@@ -144,6 +146,9 @@ class RegisterView(View):
             print("New client registered:", node_id)
             
             return JsonResponse({"success": True}, safe=False)
+
+        print("Number of Nodes:", len(node_ids))
+        print("Nodes:", node_ids)
         return JsonResponse({"success": False}, safe=False)
     
 
