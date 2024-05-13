@@ -42,11 +42,10 @@ rsa==4.9
 six==1.16.0
 tensorboard==2.15.2
 tensorboard-data-server==0.7.2
-tensorflow==2.15.0
+tensorflow
 tensorflow-datasets==4.9.4
 tensorflow-estimator==2.15.0
 tensorflow-io-gcs-filesystem==0.37.0
-tensorflow-macos==2.15.0
 tensorflow-metadata==1.15.0
 tensorflow-recommenders==0.7.3
 termcolor==2.4.0
