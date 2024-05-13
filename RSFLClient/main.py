@@ -25,7 +25,7 @@ import threading
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow logging (1: INFO, 2: WARNING, 3: ERROR)
 tf.get_logger().setLevel('ERROR')
 
-base_url = "http://127.0.0.1:8000/"
+base_url = "http://20.255.62.49:8000/"
 
 cpu_ram_usage = []
 round_start_end_time = []
