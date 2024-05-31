@@ -25,7 +25,7 @@ import threading
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow logging (1: INFO, 2: WARNING, 3: ERROR)
 tf.get_logger().setLevel('ERROR')
 
-base_url = "http://20.255.62.49:8000/"
+base_url = "http://20.11.65.172:8000/"
 
 cpu_ram_usage = []
 round_start_end_time = []
@@ -195,7 +195,7 @@ def run(_name, _numberOfRounds = 40, _threshold = 0):
     
         round_start_end_time.append((prev_round_start_time, prev_round_end_time))
 
-
+        write_analysis()
         print("Round complete.")
     
     print("Execution Complete")
